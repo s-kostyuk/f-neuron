@@ -11,20 +11,22 @@ class TriangularMembF(torch.nn.Module):
         self._right = center + radius
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Only one dimension for now
-        # TODO: Vectorize
-        assert len(x.size()) == 1 and x.size(dim=0) == 1
+        # Center the inputs
+        x = x - self._center
 
-        if self._left > x or self._right < x:
-            return torch.Tensor([0.0])
+        # Scale inputs to the -1.0..+1.0 range
+        x = x / self._radius
 
-        if self._left <= x < self._center:
-            return (x - self._left) / (self._center - self._left)
+        # Use absolute values
+        x = torch.absolute(x)
 
-        if self._center <= x <= self._right:
-            return (self._right - x) / (self._right - self._center)
+        # Compute output: y = 1 - abs(x)
+        x = 1 - x
 
-        assert False  # unreachable
+        # Drop outliers (drop negative values after all the operations above)
+        x = torch.clip(x, 0.0)
+
+        return x
 
     def __repr__(self):
         return "triangle: {},{},{}".format(self._left, self._center, self._right)
