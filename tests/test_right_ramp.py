@@ -83,7 +83,6 @@ class TestRightRampMemberFunction(unittest.TestCase):
         self.assertTrue(isinstance(out_, torch.Tensor))
         self.assertTrue(torch.allclose(out_, expected))
 
-    @unittest.skip
     def test_forward_vector(self):
         in_ = torch.Tensor([
             -2.0, -1.5, -1.0, -0.5, 0.0, +0.5, +1.0, +1.5, +2.0
@@ -97,7 +96,6 @@ class TestRightRampMemberFunction(unittest.TestCase):
         self.assertEqual(out_.size(), expected.size())
         self.assertTrue(torch.equal(out_, expected))
 
-    @unittest.skip
     def test_forward_matrix(self):
         in_ = torch.Tensor([
             [-2.0, -1.5, -1.0],

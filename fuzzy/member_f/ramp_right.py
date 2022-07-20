@@ -16,20 +16,19 @@ class RightRampMembF(torch.nn.Module):
         self._left = center - radius
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Only one dimension for now
-        # TODO: Vectorize
-        assert len(x.size()) == 1 and x.size(dim=0) == 1
+        # Move to the center
+        x = x - self._center
 
-        if x < self._left:
-            return torch.Tensor([0.0])
+        # Scale to the -1.0..1.0 range
+        x = x / self._radius
 
-        if self._left <= x <= self._center:
-            return (x - self._left) / (self._center - self._left)
+        # Clip the value to create a ramp
+        x = torch.clip(x, min=-1.0, max=0.0)
 
-        if self._center < x:
-            return torch.Tensor([1.0])
+        # Invert the value to create a right ramp
+        x = 1 + x
 
-        assert False  # unreachable
+        return x
 
     def __repr__(self):
         return "right: {},{}".format(self._left, self._center)
