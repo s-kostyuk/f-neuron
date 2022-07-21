@@ -1,3 +1,5 @@
+from typing import Callable
+
 import torch.nn
 
 
@@ -5,20 +7,21 @@ from ..member_f import TriangularMembF, LeftRampMembF, RightRampMembF
 
 
 class TriangularLayer(torch.nn.Module):
-    def __init__(self, left: float, right: float, count: int, *, init: str = 'Constant'):
+    """
+    Constant weights initialization, all membership functions active with the same weight of 1.0.
+    """
+    @staticmethod
+    def all_hot_init(count: int) -> torch.Tensor:
+        return torch.nn.Parameter(torch.ones(count + 2))
+
+    def __init__(self, left: float, right: float, count: int, *, init_f: Callable[[int], torch.Tensor] = all_hot_init):
         super().__init__()
         self._mfs = []
 
         assert left < right
         assert count >= 1
 
-        if init == 'Constant':
-            self._weights = torch.nn.Parameter(
-                torch.ones(count + 2, 1)
-            )
-        else:
-            raise NotImplementedError()
-
+        self._weights = init_f(count)
         self._mf_radius = (right - left) / count / 2
 
         self._mfs.append(
@@ -36,8 +39,8 @@ class TriangularLayer(torch.nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = [mf.forward(x) for mf in self._mfs]
-        y = torch.stack(y)
-        y = torch.mul(self._weights, y)
-        y = torch.sum(y)
-        return y
+        x = [mf.forward(x) for mf in self._mfs]
+        x = torch.stack(x, -1)
+        x = torch.mul(x, self._weights)
+        x = torch.sum(x, -1)
+        return x
