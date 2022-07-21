@@ -7,6 +7,12 @@ from fuzzy.nn import TriangularLayer
 from fuzzy.member_f import TriangularMembF
 
 
+DEBUG = True
+
+if DEBUG:
+    import matplotlib.pyplot as plt
+
+
 class TestTriangularLayerConstantInit(unittest.TestCase):
     def setUp(self) -> None:
         self.left = -3.0
@@ -79,16 +85,37 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
         self.assertTrue(isinstance(out_, torch.Tensor))
         self.assertTrue(torch.allclose(out_, expected))
 
+    def test_forward_rand_matrix_triangle_x3(self):
+        layer = TriangularLayer(self.left, self.right, count=3, init_f=TriangularLayer.all_hot_init)
+
+        in_ = self.left + torch.rand(10, 10) * self.diameter
+        out_ = layer.forward(in_)
+        expected = torch.ones_like(in_)
+
+        self.assertTrue(isinstance(out_, torch.Tensor))
+        self.assertTrue(torch.allclose(out_, expected))
+
+    def test_forward_rand_matrix_triangle_x4(self):
+        layer = TriangularLayer(self.left, self.right, count=4, init_f=TriangularLayer.all_hot_init)
+
+        in_ = self.left + torch.rand(10, 10) * self.diameter
+        out_ = layer.forward(in_)
+        expected = torch.ones_like(in_)
+
+        self.assertTrue(isinstance(out_, torch.Tensor))
+        self.assertTrue(torch.allclose(out_, expected))
+
 
 class TestTriangularLayerTrain(unittest.TestCase):
     def setUp(self) -> None:
         self.left = -3.0
         self.right = 3.0
+        self.left_ds = self.left - 3.0
+        self.right_ds = self.right + 3.0
         self.count = 1
-        self.layer = TriangularLayer(self.left, self.right, self.count, init_f=TriangularLayer.all_hot_init)
 
-    @staticmethod
-    def _learning_print_debug(x: torch.Tensor, y: torch.Tensor, y_hat: torch.Tensor, layer: TriangularLayer):
+    @classmethod
+    def _learning_print_debug(cls, x: torch.Tensor, y: torch.Tensor, y_hat: torch.Tensor, layer: TriangularLayer):
         print("x: {}, y: {}, y_hat: {}, gradient: {}, new values: {}".format(
             x, y, y_hat,
             layer._weights.grad, layer._weights.data
@@ -104,25 +131,31 @@ class TestTriangularLayerTrain(unittest.TestCase):
         y = base_function(x)
         return x, y
 
-    def _gen_dataset(self, base_function, count, shape=(1,)):
+    @classmethod
+    def _gen_dataset(cls, base_function, left, right, count, shape=(1,)):
         dataset = [
-            self._gen_ds_item(
-                base_function, self.left - 3.0, self.right + 3.0, shape
+            cls._gen_ds_item(
+                base_function, left, right, shape
             ) for _ in range(count)
         ]
         return dataset
 
-    @staticmethod
-    def _train_layer(layer: TriangularLayer, dataset: Collection[Tuple[torch.Tensor, torch.Tensor]]):
+    @classmethod
+    def _train_layer(
+            cls, layer: TriangularLayer, dataset: Collection[Tuple[torch.Tensor, torch.Tensor]], lr: float = 1e-2,
+            *, debug: bool = False
+    ):
         error_fn = torch.nn.MSELoss()
         opt = torch.optim.RMSprop(
             params=layer.parameters(),
-            lr=1e-2,
+            lr=lr,
             alpha=0.9,  # default Keras
             momentum=0.0,  # default Keras
             eps=1e-7,  # default Keras
             centered=False  # default Keras
         )
+
+        last_loss = None
 
         for x, y in dataset:
             y_hat = layer.forward(x)
@@ -130,8 +163,13 @@ class TestTriangularLayerTrain(unittest.TestCase):
 
             opt.zero_grad()
             loss.backward()
+            last_loss = loss.item()
             opt.step()
-            # self._learning_print_debug(x, y, y_hat, self.layer)
+
+            if debug:
+                cls._learning_print_debug(x, y, y_hat, layer)
+
+        return last_loss
 
     def _assert_triangle_weights(self, layer):
         # Shall be approximately 0.0 (between -0.1 and +0.1)
@@ -161,23 +199,74 @@ class TestTriangularLayerTrain(unittest.TestCase):
             layer._weights[2], torch.Tensor([+0.1]))
         )
 
+    def _gen_std_triangle(self) -> TriangularLayer:
+        return TriangularLayer(self.left, self.right, self.count, init_f=TriangularLayer.all_hot_init)
+
     def test_train_triangle_0d(self):
         function = TriangularMembF(3.0, 0.0)
-        dataset = self._gen_dataset(function, 1000)
-        self._train_layer(self.layer, dataset)
-        self._assert_triangle_weights(self.layer)
+        dataset = self._gen_dataset(function, self.left_ds, self.right_ds, 1000)
+        layer = self._gen_std_triangle()
+
+        self._train_layer(layer, dataset)
+        self._assert_triangle_weights(layer)
 
     def test_train_triangle_1d(self):
         function = TriangularMembF(3.0, 0.0)
-        dataset = self._gen_dataset(function, 250, shape=(4,))
-        self._train_layer(self.layer, dataset)
-        self._assert_triangle_weights(self.layer)
+        dataset = self._gen_dataset(function, self.left_ds, self.right_ds, 250, shape=(4,))
+        layer = self._gen_std_triangle()
+
+        self._train_layer(layer, dataset, debug=DEBUG)
+        self._assert_triangle_weights(layer)
 
     def test_train_triangle_2d(self):
         function = TriangularMembF(3.0, 0.0)
-        dataset = self._gen_dataset(function, 250, shape=(2, 2))
-        self._train_layer(self.layer, dataset)
-        self._assert_triangle_weights(self.layer)
+        dataset = self._gen_dataset(function, self.left_ds, self.right_ds, 250, shape=(2, 2))
+        layer = self._gen_std_triangle()
+
+        self._train_layer(layer, dataset)
+        self._assert_triangle_weights(layer)
+
+    @staticmethod
+    def _visualize_layer(layer: TriangularLayer, base_function, left, right, count: int):
+        range_ = right - left
+        step = range_ / count
+
+        x = torch.range(start=left, end=right, step=step)
+        y = base_function(x)
+        y_hat = layer.forward(x)
+
+        x_view = x.numpy()
+        y_view = y.numpy()
+        y_hat_view = y_hat.numpy()
+
+        plt.plot(x_view, y_view, 'r')
+        plt.plot(x_view, y_hat_view, 'g')
+        plt.show()
+
+    @classmethod
+    def _debug_view(cls, layer: TriangularLayer, base_function, left, right, count: int):
+        with torch.no_grad():
+            print(layer._weights)
+            cls._visualize_layer(layer, base_function, left, right, count)
+
+    def test_train_cos_1d(self):
+        left = - torch.pi * 3
+        right = + torch.pi * 3
+        count = 24
+
+        function = torch.cos
+        dataset = self._gen_dataset(function, left, right, 1, shape=(1000,))
+        layer = TriangularLayer(left, right, count)
+
+        last_loss = None
+
+        for _ in range(100):
+            last_loss = self._train_layer(layer, dataset)
+
+        self.assertLessEqual(last_loss, 0.5)
+
+        if DEBUG:
+            self._debug_view(layer, function, left - torch.pi, right + torch.pi, 1000)
 
 
 if __name__ == '__main__':

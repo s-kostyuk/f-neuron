@@ -14,15 +14,18 @@ class TriangularLayer(torch.nn.Module):
     def all_hot_init(count: int) -> torch.Tensor:
         return torch.nn.Parameter(torch.ones(count + 2))
 
-    def __init__(self, left: float, right: float, count: int, *, init_f: Callable[[int], torch.Tensor] = all_hot_init):
+    def __init__(self, left: float, right: float, count: int, *, init_f: Callable[[int], torch.Tensor] = None):
         super().__init__()
         self._mfs = []
 
         assert left < right
         assert count >= 1
 
+        if init_f is None:
+            init_f = self.all_hot_init
+
         self._weights = init_f(count)
-        self._mf_radius = (right - left) / count / 2
+        self._mf_radius = (right - left) / (count + 1)
 
         self._mfs.append(
             LeftRampMembF(self._mf_radius, left)
