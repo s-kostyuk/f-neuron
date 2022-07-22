@@ -106,6 +106,40 @@ class TestTriangularSynapseConstantInit(unittest.TestCase):
         self.assertTrue(torch.allclose(out_, expected))
 
 
+class TestTriangularSynapseRampInit(unittest.TestCase):
+    def setUp(self) -> None:
+        self.left = -3.0
+        self.right = 3.0
+        self.diameter = (self.right - self.left)
+        self.count = 1
+        self.module = TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.ramp_init)
+
+    def test_forward_rand_vector(self):
+        in_ = self.left + torch.range(0.0, 1.0, 1/4) * self.diameter
+        out_ = self.module.forward(in_)
+        expected = torch.Tensor([-1.0, -0.5, 0.0, +0.5, +1.0])
+
+        self.assertTrue(isinstance(out_, torch.Tensor))
+        self.assertTrue(torch.allclose(out_, expected))
+
+
+class TestTriangularSynapseInvRampInit(unittest.TestCase):
+    def setUp(self) -> None:
+        self.left = -3.0
+        self.right = 3.0
+        self.diameter = (self.right - self.left)
+        self.count = 1
+        self.module = TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.inv_ramp_init)
+
+    def test_forward_rand_vector(self):
+        in_ = self.left + torch.range(0.0, 1.0, 1/4) * self.diameter
+        out_ = self.module.forward(in_)
+        expected = torch.Tensor([+1.0, +0.5, 0.0, -0.5, -1.0])
+
+        self.assertTrue(isinstance(out_, torch.Tensor))
+        self.assertTrue(torch.allclose(out_, expected))
+
+
 class TestTriangularSynapseTrain(unittest.TestCase):
     def setUp(self) -> None:
         self.left = -3.0
@@ -256,7 +290,7 @@ class TestTriangularSynapseTrain(unittest.TestCase):
 
         function = torch.cos
         dataset = self._gen_dataset(function, left, right, 1, shape=(1000,))
-        layer = TriangularSynapse(left, right, count)
+        layer = TriangularSynapse(left, right, count, init_f=TriangularSynapse.random_init)
 
         last_loss = None
 
