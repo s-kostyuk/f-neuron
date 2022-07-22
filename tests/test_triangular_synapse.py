@@ -3,7 +3,7 @@ from typing import Collection, Tuple, Callable
 
 import torch
 
-from fuzzy.nn import TriangularLayer
+from fuzzy.nn import TriangularSynapse
 from fuzzy.member_f import TriangularMembF
 
 
@@ -13,17 +13,17 @@ if DEBUG:
     import matplotlib.pyplot as plt
 
 
-class TestTriangularLayerConstantInit(unittest.TestCase):
+class TestTriangularSynapseConstantInit(unittest.TestCase):
     def setUp(self) -> None:
         self.left = -3.0
         self.right = 3.0
         self.diameter = (self.right - self.left)
         self.count = 1
-        self.layer = TriangularLayer(self.left, self.right, self.count, init_f=TriangularLayer.all_hot_init)
+        self.module = TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.all_hot_init)
 
     def test_forward_too_left(self):
         in_ = torch.Tensor([-6.0])
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -31,7 +31,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_left_edge(self):
         in_ = torch.Tensor([self.left])
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -39,7 +39,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_center(self):
         in_ = torch.Tensor([0.0])
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -47,7 +47,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_right_edge(self):
         in_ = torch.Tensor([self.right])
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -55,7 +55,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_too_right(self):
         in_ = torch.Tensor([+6.0])
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -63,7 +63,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_rand(self):
         in_ = self.left + torch.rand(1) * self.diameter
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -71,7 +71,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_rand_vector(self):
         in_ = self.left + torch.rand(5) * self.diameter
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.Tensor([1.0, 1.0, 1.0, 1.0, 1.0])
 
         self.assertTrue(isinstance(out_, torch.Tensor))
@@ -79,14 +79,14 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
 
     def test_forward_rand_matrix(self):
         in_ = self.left + torch.rand(5, 5) * self.diameter
-        out_ = self.layer.forward(in_)
+        out_ = self.module.forward(in_)
         expected = torch.ones_like(in_)
 
         self.assertTrue(isinstance(out_, torch.Tensor))
         self.assertTrue(torch.allclose(out_, expected))
 
     def test_forward_rand_matrix_triangle_x3(self):
-        layer = TriangularLayer(self.left, self.right, count=3, init_f=TriangularLayer.all_hot_init)
+        layer = TriangularSynapse(self.left, self.right, count=3, init_f=TriangularSynapse.all_hot_init)
 
         in_ = self.left + torch.rand(10, 10) * self.diameter
         out_ = layer.forward(in_)
@@ -96,7 +96,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
         self.assertTrue(torch.allclose(out_, expected))
 
     def test_forward_rand_matrix_triangle_x4(self):
-        layer = TriangularLayer(self.left, self.right, count=4, init_f=TriangularLayer.all_hot_init)
+        layer = TriangularSynapse(self.left, self.right, count=4, init_f=TriangularSynapse.all_hot_init)
 
         in_ = self.left + torch.rand(10, 10) * self.diameter
         out_ = layer.forward(in_)
@@ -106,7 +106,7 @@ class TestTriangularLayerConstantInit(unittest.TestCase):
         self.assertTrue(torch.allclose(out_, expected))
 
 
-class TestTriangularLayerTrain(unittest.TestCase):
+class TestTriangularSynapseTrain(unittest.TestCase):
     def setUp(self) -> None:
         self.left = -3.0
         self.right = 3.0
@@ -115,7 +115,7 @@ class TestTriangularLayerTrain(unittest.TestCase):
         self.count = 1
 
     @classmethod
-    def _learning_print_debug(cls, x: torch.Tensor, y: torch.Tensor, y_hat: torch.Tensor, layer: TriangularLayer):
+    def _learning_print_debug(cls, x: torch.Tensor, y: torch.Tensor, y_hat: torch.Tensor, layer: TriangularSynapse):
         print("x: {}, y: {}, y_hat: {}, gradient: {}, new values: {}".format(
             x, y, y_hat,
             layer._weights.grad, layer._weights.data
@@ -142,7 +142,7 @@ class TestTriangularLayerTrain(unittest.TestCase):
 
     @classmethod
     def _train_layer(
-            cls, layer: TriangularLayer, dataset: Collection[Tuple[torch.Tensor, torch.Tensor]], lr: float = 1e-2,
+            cls, layer: TriangularSynapse, dataset: Collection[Tuple[torch.Tensor, torch.Tensor]], lr: float = 1e-2,
             *, debug: bool = False
     ):
         error_fn = torch.nn.MSELoss()
@@ -199,8 +199,8 @@ class TestTriangularLayerTrain(unittest.TestCase):
             layer._weights[2], torch.Tensor([+0.1]))
         )
 
-    def _gen_std_triangle(self) -> TriangularLayer:
-        return TriangularLayer(self.left, self.right, self.count, init_f=TriangularLayer.all_hot_init)
+    def _gen_std_triangle(self) -> TriangularSynapse:
+        return TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.all_hot_init)
 
     def test_train_triangle_0d(self):
         function = TriangularMembF(3.0, 0.0)
@@ -227,7 +227,7 @@ class TestTriangularLayerTrain(unittest.TestCase):
         self._assert_triangle_weights(layer)
 
     @staticmethod
-    def _visualize_layer(layer: TriangularLayer, base_function, left, right, count: int):
+    def _visualize_layer(layer: TriangularSynapse, base_function, left, right, count: int):
         range_ = right - left
         step = range_ / count
 
@@ -244,7 +244,7 @@ class TestTriangularLayerTrain(unittest.TestCase):
         plt.show()
 
     @classmethod
-    def _debug_view(cls, layer: TriangularLayer, base_function, left, right, count: int):
+    def _debug_view(cls, layer: TriangularSynapse, base_function, left, right, count: int):
         with torch.no_grad():
             print(layer._weights)
             cls._visualize_layer(layer, base_function, left, right, count)
@@ -256,7 +256,7 @@ class TestTriangularLayerTrain(unittest.TestCase):
 
         function = torch.cos
         dataset = self._gen_dataset(function, left, right, 1, shape=(1000,))
-        layer = TriangularLayer(left, right, count)
+        layer = TriangularSynapse(left, right, count)
 
         last_loss = None
 

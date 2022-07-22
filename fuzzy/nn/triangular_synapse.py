@@ -6,7 +6,7 @@ import torch.nn
 from ..member_f import TriangularMembF, LeftRampMembF, RightRampMembF
 
 
-class TriangularLayer(torch.nn.Module):
+class TriangularSynapse(torch.nn.Module):
     """
     Constant weights initialization, all membership functions active with the same weight of 1.0.
     """

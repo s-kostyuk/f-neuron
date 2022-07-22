@@ -1,2 +1,2 @@
-from .triangular_layer import TriangularLayer
+from .triangular_synapse import TriangularSynapse
 from .fuzzynet import FuzzyNet
