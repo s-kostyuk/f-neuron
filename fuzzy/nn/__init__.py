@@ -1,2 +1,3 @@
 from .triangular_synapse import TriangularSynapse
-from .fuzzynet import FuzzyNet
+from .triangular_layer import TriangularLayer
+from .lenet_fuzzy import LeNetFuzzy
