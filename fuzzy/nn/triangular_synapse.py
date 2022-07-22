@@ -44,7 +44,7 @@ class TriangularSynapse(torch.nn.Module):
 
     def __init__(self, left: float, right: float, count: int, *, init_f: Callable[[int], torch.Tensor] = None):
         super().__init__()
-        self._mfs = []
+        self._mfs = torch.nn.ModuleList()
 
         assert left < right
         assert count >= 1
