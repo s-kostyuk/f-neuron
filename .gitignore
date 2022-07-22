@@ -3,4 +3,4 @@ data/*
 runs/*
 .idea/*
 *.gv*
-__pycache__/*
+__pycache__/
