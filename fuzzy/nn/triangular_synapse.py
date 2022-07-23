@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 import torch.nn
 
@@ -8,7 +8,7 @@ from ..member_f import TriangularMembF, LeftRampMembF, RightRampMembF
 
 class TriangularSynapse(torch.nn.Module):
     @staticmethod
-    def ramp_init(count: int) -> torch.Tensor:
+    def ramp_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Initialize as a ramp function from -1.0 to +1.0.
         """
@@ -16,33 +16,38 @@ class TriangularSynapse(torch.nn.Module):
         high = +1.0
         range_ = high - low
         step = range_ / (count + 1)
-        return torch.range(low, high, step)
+        sample = torch.range(low, high, step)
+        result = torch.empty(*input_dim, len(sample))
+        return result.copy_(sample)
 
     @staticmethod
-    def inv_ramp_init(count: int) -> torch.Tensor:
+    def inv_ramp_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Initialize as a ramp function from +1.0 to -1.0.
         """
-        return - TriangularSynapse.ramp_init(count)
+        return - TriangularSynapse.ramp_init(count, input_dim)
 
     @staticmethod
-    def random_init(count: int) -> torch.Tensor:
+    def random_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Random weights initialization, ranging from -1.0 to +1.0.
         """
         low = -1.0
         high = +1.0
         range_ = high - low
-        return low + torch.rand(count + 2) * range_
+        return low + torch.rand(*input_dim, count + 2) * range_
 
     @staticmethod
-    def all_hot_init(count: int) -> torch.Tensor:
+    def all_hot_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Constant weights initialization, all membership functions active with the same weight of 1.0.
         """
-        return torch.ones(count + 2)
+        return torch.ones(*input_dim, count + 2)
 
-    def __init__(self, left: float, right: float, count: int, *, init_f: Callable[[int], torch.Tensor] = None):
+    def __init__(
+            self, left: float, right: float, count: int,
+            *, init_f: Callable[[int, Tuple[int, ...]], torch.Tensor] = None, input_dim=(1,)
+    ):
         super().__init__()
         self._mfs = torch.nn.ModuleList()
 
@@ -52,7 +57,7 @@ class TriangularSynapse(torch.nn.Module):
         if init_f is None:
             init_f = self.ramp_init
 
-        self._weights = torch.nn.Parameter(init_f(count))
+        self._weights = torch.nn.Parameter(init_f(count, input_dim))
         self._mf_radius = (right - left) / (count + 1)
 
         self._mfs.append(

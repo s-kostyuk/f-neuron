@@ -208,29 +208,29 @@ class TestTriangularSynapseTrain(unittest.TestCase):
     def _assert_triangle_weights(self, layer):
         # Shall be approximately 0.0 (between -0.1 and +0.1)
         self.assertTrue(torch.greater_equal(
-            layer._weights[0], torch.Tensor([-0.1]))
+            layer._weights[0][0], torch.Tensor([-0.1]))
         )
 
         self.assertTrue(torch.less_equal(
-            layer._weights[0], torch.Tensor([+0.1]))
+            layer._weights[0][0], torch.Tensor([+0.1]))
         )
 
         # Shall be approximately 1.0 (between +0.9 and +1.1)
         self.assertTrue(torch.greater_equal(
-            layer._weights[1], torch.Tensor([+0.9]))
+            layer._weights[0][1], torch.Tensor([+0.9]))
         )
 
         self.assertTrue(torch.less_equal(
-            layer._weights[0], torch.Tensor([+1.1]))
+            layer._weights[0][1], torch.Tensor([+1.1]))
         )
 
         # Shall be approximately 0.0 (between -0.1 and +0.1)
         self.assertTrue(torch.greater_equal(
-            layer._weights[2], torch.Tensor([-0.1]))
+            layer._weights[0][2], torch.Tensor([-0.1]))
         )
 
         self.assertTrue(torch.less_equal(
-            layer._weights[2], torch.Tensor([+0.1]))
+            layer._weights[0][2], torch.Tensor([+0.1]))
         )
 
     def _gen_std_triangle(self) -> TriangularSynapse:

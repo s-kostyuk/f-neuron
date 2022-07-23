@@ -14,20 +14,13 @@ class TriangularLayer(torch.nn.Module):
         self._count = mf_count
 
         self._linear = torch.nn.Linear(in_features, out_features, bias)
-        self._acts = torch.nn.ModuleList([
-            TriangularSynapse(self._left, self._right, self._count) for _ in range(out_features)
-        ])
+        self._acts = TriangularSynapse(self._left, self._right, self._count, input_dim=(out_features,))
 
     def _forward_synapse(self, x: torch.Tensor) -> torch.Tensor:
         x_vector = torch.unbind(x, dim=-1)
 
         assert len(x_vector) == self._linear.out_features
-        assert len(x_vector) == len(self._acts)
-
-        y_vector = [
-            self._acts[i].forward(x_vector[i]) for i in range(self._linear.out_features)
-        ]
-        y = torch.stack(y_vector, dim=-1)
+        y = self._acts(x)
 
         return y
 
