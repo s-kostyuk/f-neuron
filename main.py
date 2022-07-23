@@ -289,9 +289,11 @@ def train_eval(
 def main():
     if TRAIN_CLASSIC:
         train_eval(net_name='LeNet', dataset_name='F-MNIST')
+        train_eval(net_name='LeNet', dataset_name='CIFAR10')
 
     if TRAIN_FUZZY:
         train_eval(net_name='LeNetFuzzy', dataset_name='F-MNIST')
+        train_eval(net_name='LeNetFuzzy', dataset_name='CIFAR10')
 
 
 if __name__ == "__main__":
