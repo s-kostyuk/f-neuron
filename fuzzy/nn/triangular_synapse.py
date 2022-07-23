@@ -10,7 +10,15 @@ class TriangularSynapse(torch.nn.Module):
     @staticmethod
     def ramp_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
-        Initialize as a ramp function from -1.0 to +1.0.
+        Initialize member function weights to create a ramp function from -1.0 to +1.0.
+
+        :param count: number of member functions.
+        :param input_dim: input data dimensions:
+            - scalar ``(1,)`` - by default;
+            - vector ``(x,)``;
+            - matrix ``(x,y)``;
+            - multi-channel image: ``(z,x,y)`` where ``z`` is the number of channels.
+        :return: initialized tensor of size ``(z,x,y,count)`` where dimensions ``z`` and ``y`` are optional.
         """
         low = -1.0
         high = +1.0
@@ -23,7 +31,15 @@ class TriangularSynapse(torch.nn.Module):
     @staticmethod
     def inv_ramp_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
-        Initialize as a ramp function from +1.0 to -1.0.
+        Initialize member function weights to create an inverse ramp function from +1.0 to -1.0.
+
+        :param count: number of member functions.
+        :param input_dim: input data dimensions:
+            - scalar ``(1,)`` - by default;
+            - vector ``(x,)``;
+            - matrix ``(x,y)``;
+            - multi-channel image: ``(z,x,y)`` where ``z`` is the number of channels.
+        :return: initialized tensor of size ``(z,x,y,count)`` where dimensions ``z`` and ``y`` are optional.
         """
         return - TriangularSynapse.ramp_init(count, input_dim)
 
@@ -31,6 +47,14 @@ class TriangularSynapse(torch.nn.Module):
     def random_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Random weights initialization, ranging from -1.0 to +1.0.
+
+        :param count: number of member functions.
+        :param input_dim: input data dimensions:
+            - scalar ``(1,)`` - by default;
+            - vector ``(x,)``;
+            - matrix ``(x,y)``;
+            - multi-channel image: ``(z,x,y)`` where ``z`` is the number of channels.
+        :return: initialized tensor of size ``(z,x,y,count)`` where dimensions ``z`` and ``y`` are optional.
         """
         low = -1.0
         high = +1.0
@@ -41,6 +65,14 @@ class TriangularSynapse(torch.nn.Module):
     def all_hot_init(count: int, input_dim: Tuple[int, ...] = (1,)) -> torch.Tensor:
         """
         Constant weights initialization, all membership functions active with the same weight of 1.0.
+
+        :param count: number of member functions.
+        :param input_dim: input data dimensions:
+            - scalar ``(1,)`` - by default;
+            - vector ``(x,)``;
+            - matrix ``(x,y)``;
+            - multi-channel image: ``(z,x,y)`` where ``z`` is the number of channels.
+        :return: initialized tensor of size ``(z,x,y,count)`` where dimensions ``z`` and ``y`` are optional.
         """
         return torch.ones(*input_dim, count + 2)
 
