@@ -37,7 +37,7 @@ class LeNetFuzzy(torch.nn.Module):
         self.fc3 = TriangularLayer(
             in_features=self._fc3_in_features, out_features=self._fc4_in_features,
             bias=True,
-            mf_count=3  # TODO: Fix performance issues
+            mf_count=12
         )
 
         self.fc4 = torch.nn.Linear(
@@ -56,8 +56,7 @@ class LeNetFuzzy(torch.nn.Module):
     def _init_as_ahaf_mnist(self):
         self._image_channels = 1
         self._fc3_in_features = 4 * 4 * 50
-        # self._fc4_in_features = 500  # TODO: Fix performance issues
-        self._fc4_in_features = 50
+        self._fc4_in_features = 500
 
     def _init_as_ahaf_cifar(self):
         self._image_channels = 3
