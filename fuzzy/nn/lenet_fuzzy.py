@@ -1,10 +1,10 @@
 import torch.nn
 
-from .triangular_layer import TriangularLayer
+from .triangular_synapse import TriangularSynapse
 
 
 class LeNetFuzzy(torch.nn.Module):
-    def __init__(self, *, flavor='MNIST'):
+    def __init__(self, *, flavor='MNIST', fuzzy_fcn: bool = True):
         super(LeNetFuzzy, self).__init__()
 
         if flavor == 'MNIST' or flavor == 'F-MNIST':
@@ -34,11 +34,17 @@ class LeNetFuzzy(torch.nn.Module):
 
         self._flatten = torch.nn.Flatten(start_dim=1, end_dim=-1)
 
-        self.fc3 = TriangularLayer(
+        self.fc3 = torch.nn.Linear(
             in_features=self._fc3_in_features, out_features=self._fc4_in_features,
-            bias=True,
-            mf_count=12
+            bias=True
         )
+
+        if fuzzy_fcn:
+            self.act3 = TriangularSynapse(
+                left=-1.0, right=+1.0, count=12, input_dim=(self._fc4_in_features,)
+            )
+        else:
+            self.act3 = torch.relu
 
         self.fc4 = torch.nn.Linear(
             in_features=self._fc4_in_features, out_features=10,
@@ -49,7 +55,7 @@ class LeNetFuzzy(torch.nn.Module):
             self.conv1, self.act1, self.pool1,
             self.conv2, self.act2, self.pool2,
             self._flatten,
-            self.fc3,
+            self.fc3, self.act3,
             self.fc4
         ]
 
