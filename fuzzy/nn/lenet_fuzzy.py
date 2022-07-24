@@ -1,10 +1,15 @@
+from typing import Sequence, Tuple
+
 import torch.nn
 
 from .triangular_synapse import TriangularSynapse
 
 
 class LeNetFuzzy(torch.nn.Module):
-    def __init__(self, *, flavor='MNIST', fuzzy_fcn: bool = True):
+    def __init__(
+            self, *, flavor='MNIST', fuzzy_fcn: bool = True,
+            mf_count: int = 12, mf_range: Tuple[float, float] = (-1.0, +1.0)
+    ):
         super(LeNetFuzzy, self).__init__()
 
         if flavor == 'MNIST' or flavor == 'F-MNIST':
@@ -41,7 +46,7 @@ class LeNetFuzzy(torch.nn.Module):
 
         if fuzzy_fcn:
             self.act3 = TriangularSynapse(
-                left=-1.0, right=+1.0, count=12, input_dim=(self._fc4_in_features,)
+                left=mf_range[0], right=mf_range[1], count=mf_count, input_dim=(self._fc4_in_features,)
             )
         else:
             self.act3 = torch.relu
@@ -74,3 +79,13 @@ class LeNetFuzzy(torch.nn.Module):
             x = mod(x)
 
         return x
+
+    @property
+    def act_params(self) -> Sequence[torch.nn.Parameter]:
+        result = []
+
+        if isinstance(self.act3, TriangularSynapse):
+            result.extend(self.act3.parameters())
+
+        return result
+

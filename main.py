@@ -10,15 +10,18 @@ import torchinfo
 import torchvision.transforms
 import torchvision.datasets
 
-from fuzzy.nn import LeNetFuzzy
 from fuzzy.libs import RunningStat
+from fuzzy.libs import save_network, load_network
+from fuzzy.libs import create_network
 
 DynamicData = typing.List[typing.Dict[str, typing.Any]]
 
 
 DEBUG = False
 RESULTS_PATH = "runs"
+SAVE_MODEL_ENABLED = True
 SAVE_DYNAMICS_ENABLED = True
+LOAD_MODEL_ENABLED = False
 TRAIN_CLASSIC = False
 TRAIN_FUZZY = True
 
@@ -140,16 +143,6 @@ def train_non_dsu(batches, dev, net, error_fn, opt):
     return loss_stat
 
 
-def create_network(net_name: str, dataset_name: str):
-    if net_name == "LeNet":
-        return LeNetFuzzy(flavor=dataset_name, fuzzy_fcn=False)
-
-    if net_name == "LeNetFuzzy":
-        return LeNetFuzzy(flavor=dataset_name, fuzzy_fcn=True)
-
-    raise NotImplemented("Networks other than LeNetFuzzy are not supported.")
-
-
 def train_eval(
         net_name: str, dataset_name: str
 ) -> None:
@@ -181,7 +174,7 @@ def train_eval(
     nb_epochs = 100
     rand_seed = 42
 
-    if SAVE_DYNAMICS_ENABLED:
+    if SAVE_MODEL_ENABLED or SAVE_DYNAMICS_ENABLED:
         create_results_folder()
 
     dynamic_data = []  # type: typing.List[typing.Dict]
@@ -210,6 +203,9 @@ def train_eval(
     )
 
     net = create_network(net_name, dataset_name)
+
+    if LOAD_MODEL_ENABLED:
+        load_network(net, net_name, dataset_name, "ReLU", batch_size, nb_start_ep, False)
 
     net.to(device=dev)
 
@@ -284,6 +280,9 @@ def train_eval(
 
         # Classic - update LR on each epoch
         sched.step()
+
+    if SAVE_MODEL_ENABLED:
+        save_network(net, net_name, dataset_name, "ReLU", batch_size, nb_epochs, False)
 
     if SAVE_DYNAMICS_ENABLED:
         save_dynamic_data(dynamic_data, net_name, dataset_name, "ReLU", batch_size, nb_epochs, False)
