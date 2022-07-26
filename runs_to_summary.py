@@ -78,7 +78,7 @@ def results_to_table(results: List[Sequence], file_name: str):
             net, var, _, act, dataset, ep, acc = result[:7]
 
             net_str = "LeNet-5" if net == "LeNet" else net
-            act_str = "Ramp-like {}".format(var) if var else act
+            act_str = "{}-like {}".format(act, var) if var else act
 
             right.extend(
                 (acc, ep)
@@ -131,7 +131,7 @@ def results_to_latex(results: List[Sequence], file_name: str):
 
             net_str = "LeNet-5" if net == "LeNet" else net
             act_str = var if var else act
-            init_str = "Ramp" if var else "N/A"
+            init_str = act if var else "N/A"
             acc_str_base = "{:.2f}".format(acc)
             acc_str = "\\textbf{{{}}}".format(acc_str_base) if best else acc_str_base
 
@@ -178,14 +178,37 @@ def results_add_best_flag(results: List[MutableSequence]):
 
 
 def main():
+    def _is_fuzzy_act(act_name: str) -> bool:
+        # Not 100% correct but it works for now
+        return act_name != "ReLU"
+
+    def _is_fuzzy_net(net_variant: str) -> bool:
+        return net_variant == "Fuzzy"
+
+    def _is_fuzzy_trainer(trainer: str) -> bool:
+        return trainer != ""
+
+    def _is_valid_combination(params: Sequence[str]) -> bool:
+        net_variant_ = params[1]
+        trainer_ = params[2]
+        act_f_ = params[3]
+
+        if _is_fuzzy_net(net_variant_) and _is_fuzzy_act(act_f_):
+            return True
+
+        if not _is_fuzzy_net(net_variant_) and not _is_fuzzy_act(act_f_) and not _is_fuzzy_trainer(trainer_):
+            return True
+
+        return False
+
     networks = ["LeNet", "KerasNet"]
     net_variants = ["", "Fuzzy"]
     trainers = [""]
-    activations = ["ReLU"]
+    activations = ["ReLU", "Ramp", "Random", "Constant"]
     datasets = ["F-MNIST", "CIFAR10"]
 
     all_combinations = itertools.product(networks, net_variants, trainers, activations, datasets)
-    all_combinations = filter(lambda x: x[1] or not x[2], all_combinations)
+    all_combinations = filter(_is_valid_combination, all_combinations)
 
     results = gather_results(all_combinations, runs_dir="runs")
     results_add_best_flag(results)

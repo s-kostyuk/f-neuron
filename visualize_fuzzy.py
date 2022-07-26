@@ -74,34 +74,43 @@ def load_and_visualize(
     else:
         rows = min(max_rows, num_neurons)
 
-    height = 1.17 * rows
+    height = 1.17 * (rows + 0.5)
 
     fig = plt.figure(tight_layout=True, figsize=(7, height))
+    fig.suptitle("{}, {}, {}-like function".format(net_name, dataset_name, act_name))
     with torch.no_grad():
         if net_name.endswith("Fuzzy"):
             visualize_activations_fuzzy(fuzzy_params, fig, rows, show_subtitles)
 
     plt.savefig(result_path, dpi=300, format='svg')
+    del net
 
 
 def main():
     torch.manual_seed(seed=256)
     max_rows = 2
+
+    fuzzy_init_as = "Ramp"
+
     load_and_visualize(
-        net_name='LeNetFuzzy', dataset_name='F-MNIST', act_name='ReLU', frozen_act=False,
-        batch_size=64, start_epoch=100, result_path="runs/func_view_LeNet_F-MNIST_ReLU.svg", max_rows=max_rows
+        net_name='LeNetFuzzy', dataset_name='F-MNIST', act_name=fuzzy_init_as, frozen_act=False,
+        batch_size=64, start_epoch=100, result_path="runs/func_view_LeNet_F-MNIST_{}.svg".format(fuzzy_init_as),
+        max_rows=max_rows
     )
     load_and_visualize(
-        net_name='LeNetFuzzy', dataset_name='CIFAR10', act_name='ReLU', frozen_act=False,
-        batch_size=64, start_epoch=100, result_path="runs/func_view_LeNet_CIFAR10_ReLU.svg", max_rows=max_rows
+        net_name='LeNetFuzzy', dataset_name='CIFAR10', act_name=fuzzy_init_as, frozen_act=False,
+        batch_size=64, start_epoch=100, result_path="runs/func_view_LeNet_CIFAR10_{}.svg".format(fuzzy_init_as),
+        max_rows=max_rows
     )
     load_and_visualize(
-        net_name='KerasNetFuzzy', dataset_name='F-MNIST', act_name='ReLU', frozen_act=False,
-        batch_size=64, start_epoch=100, result_path="runs/func_view_KerasNet_F-MNIST_ReLU.svg", max_rows=max_rows
+        net_name='KerasNetFuzzy', dataset_name='F-MNIST', act_name=fuzzy_init_as, frozen_act=False,
+        batch_size=64, start_epoch=100, result_path="runs/func_view_KerasNet_F-MNIST_{}.svg".format(fuzzy_init_as),
+        max_rows=max_rows
     )
     load_and_visualize(
-        net_name='KerasNetFuzzy', dataset_name='CIFAR10', act_name='ReLU', frozen_act=False,
-        batch_size=64, start_epoch=100, result_path="runs/func_view_KerasNet_CIFAR10_ReLU.svg", max_rows=max_rows
+        net_name='KerasNetFuzzy', dataset_name='CIFAR10', act_name=fuzzy_init_as, frozen_act=False,
+        batch_size=64, start_epoch=100, result_path="runs/func_view_KerasNet_CIFAR10_{}.svg".format(fuzzy_init_as),
+        max_rows=max_rows
     )
 
 

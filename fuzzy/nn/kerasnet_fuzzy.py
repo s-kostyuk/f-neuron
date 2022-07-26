@@ -33,7 +33,8 @@ class KerasNetFuzzy(torch.nn.Module):
     """
     def __init__(
             self, *, flavor='MNIST', fuzzy_fcn: bool = True,
-            mf_count: int = 12, mf_range: Tuple[float, float] = (-1.0, +1.0)
+            mf_count: int = 12, mf_range: Tuple[float, float] = (-1.0, +1.0),
+            fuzzy_init: str = "Ramp"
     ):
         super(KerasNetFuzzy, self).__init__()
 
@@ -82,7 +83,8 @@ class KerasNetFuzzy(torch.nn.Module):
 
         if fuzzy_fcn:
             self.act7 = TriangularSynapse(
-                left=mf_range[0], right=mf_range[1], count=mf_count, input_dim=(self._fc8_out_features,)
+                left=mf_range[0], right=mf_range[1], count=mf_count, input_dim=(self._fc8_out_features,),
+                init_f=TriangularSynapse.get_init_f_by_name(fuzzy_init)
             )
         else:
             self.act7 = torch.relu

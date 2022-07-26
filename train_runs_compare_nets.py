@@ -32,7 +32,7 @@ def to_base_legend(options):
     activation = options[2]
 
     if var == "Fuzzy":
-        return "Ramp-like fuzzy activation"
+        return "{}-like fuzzy activation".format(activation)
     else:
         return "{} activation".format(activation)
 
@@ -111,7 +111,9 @@ def main():
     img_path_template_lenet = "runs/dynamics-lenet-{}_comparison.svg"
     nets_le_net = (
         ("LeNet", "", "ReLU", batch_size),
-        ("LeNet", "Fuzzy", "ReLU", batch_size),
+        ("LeNet", "Fuzzy", "Ramp", batch_size),
+        ("LeNet", "Fuzzy", "Random", batch_size),
+        ("LeNet", "Fuzzy", "Constant", batch_size),
     )
 
     visualize(nets_le_net, img_path_template_lenet, "F-MNIST", "LeNet-5 on Fashion-MNIST")
@@ -120,11 +122,13 @@ def main():
     img_path_template_keras_net = "runs/dynamics-kerasnet-{}_comparison.svg"
     nets_keras_net = (
         ("KerasNet", "", "ReLU", batch_size),
-        ("KerasNet", "Fuzzy", "ReLU", batch_size),
+        ("KerasNet", "Fuzzy", "Ramp", batch_size),
+        ("KerasNet", "Fuzzy", "Random", batch_size),
+        ("KerasNet", "Fuzzy", "Constant", batch_size),
     )
 
-    visualize(nets_keras_net, img_path_template_keras_net, "F-MNIST", base_title=None)
-    visualize(nets_keras_net, img_path_template_keras_net, "CIFAR10", base_title=None)
+    visualize(nets_keras_net, img_path_template_keras_net, "F-MNIST", "KerasNet on Fashion-MNIST")
+    visualize(nets_keras_net, img_path_template_keras_net, "CIFAR10", "KerasNet on CIFAR-10")
 
 
 if __name__ == "__main__":

@@ -144,7 +144,7 @@ def train_non_dsu(batches, dev, net, error_fn, opt):
 
 
 def train_eval(
-        net_name: str, dataset_name: str
+        net_name: str, dataset_name: str, fuzzy_init: str = "Ramp"
 ) -> None:
     """
     Dataset A:
@@ -202,10 +202,12 @@ def train_eval(
         test_set, batch_size=1000, num_workers=4
     )
 
-    net = create_network(net_name, dataset_name)
+    net = create_network(net_name, dataset_name, fuzzy_init=fuzzy_init)
+
+    act_name = fuzzy_init if "Fuzzy" in net_name else "ReLU"
 
     if LOAD_MODEL_ENABLED:
-        load_network(net, net_name, dataset_name, "ReLU", batch_size, nb_start_ep, False)
+        load_network(net, net_name, dataset_name, act_name, batch_size, nb_start_ep, False)
 
     net.to(device=dev)
 
@@ -282,10 +284,10 @@ def train_eval(
         sched.step()
 
     if SAVE_MODEL_ENABLED:
-        save_network(net, net_name, dataset_name, "ReLU", batch_size, nb_epochs, False)
+        save_network(net, net_name, dataset_name, act_name, batch_size, nb_epochs, False)
 
     if SAVE_DYNAMICS_ENABLED:
-        save_dynamic_data(dynamic_data, net_name, dataset_name, "ReLU", batch_size, nb_epochs, False)
+        save_dynamic_data(dynamic_data, net_name, dataset_name, act_name, batch_size, nb_epochs, False)
 
 
 def main():
@@ -296,10 +298,11 @@ def main():
         train_eval(net_name='KerasNet', dataset_name='CIFAR10')
 
     if TRAIN_FUZZY:
-        train_eval(net_name='LeNetFuzzy', dataset_name='F-MNIST')
-        train_eval(net_name='LeNetFuzzy', dataset_name='CIFAR10')
-        train_eval(net_name='KerasNetFuzzy', dataset_name='F-MNIST')
-        train_eval(net_name='KerasNetFuzzy', dataset_name='CIFAR10')
+        fuzzy_init = "Ramp"
+        train_eval(net_name='LeNetFuzzy', dataset_name='F-MNIST', fuzzy_init=fuzzy_init)
+        train_eval(net_name='LeNetFuzzy', dataset_name='CIFAR10', fuzzy_init=fuzzy_init)
+        train_eval(net_name='KerasNetFuzzy', dataset_name='F-MNIST', fuzzy_init=fuzzy_init)
+        train_eval(net_name='KerasNetFuzzy', dataset_name='CIFAR10', fuzzy_init=fuzzy_init)
 
 
 if __name__ == "__main__":

@@ -76,6 +76,19 @@ class TriangularSynapse(torch.nn.Module):
         """
         return torch.ones(*input_dim, count + 2)
 
+    @classmethod
+    def get_init_f_by_name(cls, init_f_name: str) -> Callable[[int, Tuple[int, ...]], torch.Tensor]:
+        if init_f_name == "Ramp":
+            fuzzy_init_f = TriangularSynapse.ramp_init
+        elif init_f_name == "Random":
+            fuzzy_init_f = TriangularSynapse.random_init
+        elif init_f_name == "Constant":
+            fuzzy_init_f = TriangularSynapse.all_hot_init
+        else:
+            raise NotImplemented("Other initialization functions for fuzzy weights are not supported.")
+
+        return fuzzy_init_f
+
     def __init__(
             self, left: float, right: float, count: int,
             *, init_f: Callable[[int, Tuple[int, ...]], torch.Tensor] = None, input_dim=(1,)
