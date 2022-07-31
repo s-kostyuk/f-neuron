@@ -115,7 +115,9 @@ class TestTriangularSynapseRampInit(unittest.TestCase):
         self.module = TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.ramp_init)
 
     def test_forward_rand_vector(self):
-        in_ = self.left + torch.range(0.0, 1.0, 1/4) * self.diameter
+        step = 1 / 4
+        eps = step / 100
+        in_ = self.left + torch.arange(0.0, 1.0 + eps, step) * self.diameter
         out_ = self.module.forward(in_)
         expected = torch.Tensor([-1.0, -0.5, 0.0, +0.5, +1.0])
 
@@ -132,7 +134,9 @@ class TestTriangularSynapseInvRampInit(unittest.TestCase):
         self.module = TriangularSynapse(self.left, self.right, self.count, init_f=TriangularSynapse.inv_ramp_init)
 
     def test_forward_rand_vector(self):
-        in_ = self.left + torch.range(0.0, 1.0, 1/4) * self.diameter
+        step = 1 / 4
+        eps = step / 100
+        in_ = self.left + torch.arange(0.0, 1.0 + eps, step) * self.diameter
         out_ = self.module.forward(in_)
         expected = torch.Tensor([+1.0, +0.5, 0.0, -0.5, -1.0])
 
@@ -264,8 +268,9 @@ class TestTriangularSynapseTrain(unittest.TestCase):
     def _visualize_layer(layer: TriangularSynapse, base_function, left, right, count: int):
         range_ = right - left
         step = range_ / count
+        eps = step / 100
 
-        x = torch.range(start=left, end=right, step=step)
+        x = torch.arange(start=left, end=right+eps, step=step)
         y = base_function(x)
         y_hat = layer.forward(x)
 

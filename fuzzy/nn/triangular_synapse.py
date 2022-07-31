@@ -24,7 +24,8 @@ class TriangularSynapse(torch.nn.Module):
         high = +1.0
         range_ = high - low
         step = range_ / (count + 1)
-        sample = torch.range(low, high, step)
+        eps = step / 100
+        sample = torch.arange(low, high+eps, step)
         result = torch.empty(*input_dim, len(sample))
         return result.copy_(sample)
 
