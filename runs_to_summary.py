@@ -103,8 +103,8 @@ def results_to_latex(results: List[Sequence], file_name: str):
     """
     header = """
 \t\\begin{table}[htbp]
-\t\t\\label{table:tab1}
 \t\t\\caption{Best test set accuracy, up to 100 epochs}
+\t\t\\label{table:tab1}
 \t\t\\begin{tabular}{lllcccc}
 \t\t\t\\toprule
 \t\t\t& & & \\multicolumn{2}{c}{Fashion-MNIST} & \\multicolumn{2}{c}{CIFAR-10} \\\\
